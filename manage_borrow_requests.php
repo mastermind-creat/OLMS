@@ -23,6 +23,7 @@ if (isset($_GET['action']) && isset($_GET['request_id'])) {
     $request_id = intval($_GET['request_id']);
 
     if ($action === 'approve') {
+        // Approve the request and set status to "Book Issued"
         $approve_sql = "UPDATE borrow_requests SET status = 'Book Issued' WHERE id = $request_id";
         if ($conn->query($approve_sql) === TRUE) {
             echo "<script>alert('Borrow request approved and status updated to Book Issued!'); window.location.href='manage_borrow_requests.php';</script>";
@@ -30,6 +31,7 @@ if (isset($_GET['action']) && isset($_GET['request_id'])) {
             echo "<script>alert('Error approving request: " . $conn->error . "');</script>";
         }
     } elseif ($action === 'reject') {
+        // Reject the request and set status to "Rejected"
         $reject_sql = "UPDATE borrow_requests SET status = 'Rejected' WHERE id = $request_id";
         if ($conn->query($reject_sql) === TRUE) {
             echo "<script>alert('Borrow request rejected successfully!'); window.location.href='manage_borrow_requests.php';</script>";
@@ -37,8 +39,18 @@ if (isset($_GET['action']) && isset($_GET['request_id'])) {
             echo "<script>alert('Error rejecting request: " . $conn->error . "');</script>";
         }
     } elseif ($action === 'return') {
+        // Mark the book as returned and set status to "Book Returned"
         $return_sql = "UPDATE borrow_requests SET status = 'Book Returned' WHERE id = $request_id";
         if ($conn->query($return_sql) === TRUE) {
+            // Increment the quantity of the book by 1
+            $book_id_sql = "SELECT book_id FROM borrow_requests WHERE id = $request_id";
+            $book_id_result = $conn->query($book_id_sql);
+            if ($book_id_result->num_rows > 0) {
+                $book_id = $book_id_result->fetch_assoc()['book_id'];
+                $update_quantity_sql = "UPDATE books SET quantity = quantity + 1 WHERE id = $book_id";
+                $conn->query($update_quantity_sql);
+            }
+
             echo "<script>alert('Book marked as returned successfully!'); window.location.href='manage_borrow_requests.php';</script>";
         } else {
             echo "<script>alert('Error marking book as returned: " . $conn->error . "');</script>";

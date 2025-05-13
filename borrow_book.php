@@ -21,12 +21,16 @@ if (isset($_GET['book_id'])) {
         // Handle form submission
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $days = intval($_POST['days']);
-            $total_cost = $days * 50; // Ksh. 50 per day
+            $total_cost = $days * 50; // Example: Ksh. 50 per day
 
             // Insert borrow request into borrow_requests table
-            $sql = "INSERT INTO borrow_requests (book_id, user_id, days, total_cost, status) 
-                    VALUES ($book_id, $user_id, $days, $total_cost, 'pending')";
-            if ($conn->query($sql) === TRUE) {
+            $borrow_sql = "INSERT INTO borrow_requests (book_id, user_id, days, total_cost, status) 
+                           VALUES ($book_id, $user_id, $days, $total_cost, 'pending')";
+            if ($conn->query($borrow_sql) === TRUE) {
+                // Reduce the quantity of the book by 1
+                $update_quantity_sql = "UPDATE books SET quantity = quantity - 1 WHERE id = $book_id AND quantity > 0";
+                $conn->query($update_quantity_sql);
+
                 echo "<script>alert('Borrow request sent successfully! Please wait for librarian approval.'); window.location.href='member_dashboard.php';</script>";
             } else {
                 echo "Error: " . $conn->error;

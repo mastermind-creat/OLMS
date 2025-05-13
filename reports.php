@@ -25,7 +25,7 @@ $total_borrowed_books_sql = "SELECT COUNT(*) AS total FROM borrowed_books";
 $total_borrowed_books_result = $conn->query($total_borrowed_books_sql);
 $total_borrowed_books = $total_borrowed_books_result->fetch_assoc()['total'];
 
-// Fetch borrowing trends
+// Fetch frequently borrowed categories
 $frequent_categories_sql = "
     SELECT categories.name AS category_name, COUNT(borrowed_books.id) AS borrow_count
     FROM borrowed_books
@@ -60,13 +60,13 @@ $user_search_result = $conn->query($user_search_sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports</title>
+    <title>Library Reports</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -91,7 +91,7 @@ $user_search_result = $conn->query($user_search_sql);
         <div class="mt-5">
             <h4>Frequently Borrowed Categories</h4>
             <?php if (!empty($category_names)): ?>
-                <table class="table table-striped">
+                <table class="table table-striped" id="categoriesTable">
                     <thead>
                         <tr>
                             <th>Category</th>
@@ -107,51 +107,17 @@ $user_search_result = $conn->query($user_search_sql);
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                <button class="btn btn-primary" onclick="printTable('categoriesTable')">Print</button>
+                <button class="btn btn-success" onclick="exportToExcel('categoriesTable', 'Frequently_Borrowed_Categories')">Export to Excel</button>
             <?php else: ?>
                 <p class="text-muted">No data available for borrowed categories.</p>
             <?php endif; ?>
         </div>
 
-        <!-- Statistics Section -->
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Librarians</h5>
-                        <p class="card-text display-6"><?= $total_librarians; ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Members</h5>
-                        <p class="card-text display-6"><?= $total_members; ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Books</h5>
-                        <p class="card-text display-6"><?= $total_books; ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Books Borrowed</h5>
-                        <p class="card-text display-6"><?= $total_borrowed_books; ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Borrowing Trends Chart -->
+        <!-- Bar Graph for Frequently Borrowed Categories -->
         <div class="mt-5">
-            <h4>Borrowing Trends</h4>
-            <canvas id="borrowingTrendsChart"></canvas>
+            <h4>Frequently Borrowed Categories (Bar Graph)</h4>
+            <canvas id="categoriesChart"></canvas>
         </div>
 
         <!-- User Search and Filter Section -->
@@ -175,13 +141,12 @@ $user_search_result = $conn->query($user_search_sql);
             </form>
 
             <div class="mt-4">
-                <table class="table table-striped">
+                <table class="table table-striped" id="usersTable">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -191,37 +156,38 @@ $user_search_result = $conn->query($user_search_sql);
                                     <td><?= htmlspecialchars($user['name']); ?></td>
                                     <td><?= htmlspecialchars($user['email']); ?></td>
                                     <td><?= htmlspecialchars($user['role']); ?></td>
-                                    <td>
-                                        <a href="edit_user.php?id=<?= $user['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                                        <a href="delete_user.php?id=<?= $user['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
-                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4" class="text-center">No users found.</td>
+                                <td colspan="3" class="text-center">No users found.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <button class="btn btn-primary" onclick="printTable('usersTable')">Print</button>
+                <button class="btn btn-success" onclick="exportToExcel('usersTable', 'Users')">Export to Excel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Borrowing Trends Chart
-        const ctx = document.getElementById('borrowingTrendsChart').getContext('2d');
-        const borrowingTrendsChart = new Chart(ctx, {
-            type: 'line',
+        // Prepare data for the chart
+        const categoryLabels = <?= json_encode($category_names); ?>;
+        const borrowCounts = <?= json_encode($category_borrow_counts); ?>;
+
+        // Render the bar chart
+        const ctx = document.getElementById('categoriesChart').getContext('2d');
+        const categoriesChart = new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: <?= json_encode(array_column($borrowing_trends, 'borrow_date')); ?>,
+                labels: categoryLabels,
                 datasets: [{
-                    label: 'Books Borrowed',
-                    data: <?= json_encode(array_column($borrowing_trends, 'borrow_count')); ?>,
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    label: 'Borrow Count',
+                    data: borrowCounts,
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderWidth: 2,
-                    tension: 0.4
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -236,19 +202,37 @@ $user_search_result = $conn->query($user_search_sql);
                     x: {
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: 'Categories'
                         }
                     },
                     y: {
                         title: {
                             display: true,
-                            text: 'Books Borrowed'
+                            text: 'Borrow Count'
                         },
                         beginAtZero: true
                     }
                 }
             }
         });
+
+        // Print Table
+        function printTable(tableId) {
+            const table = document.getElementById(tableId).outerHTML;
+            const newWindow = window.open('');
+            newWindow.document.write('<html><head><title>Print Table</title></head><body>' + table + '</body></html>');
+            newWindow.print();
+            newWindow.close();
+        }
+
+        // Export Table to Excel
+        function exportToExcel(tableId, filename) {
+            const table = document.getElementById(tableId);
+            const workbook = XLSX.utils.table_to_book(table, {
+                sheet: "Sheet1"
+            });
+            XLSX.writeFile(workbook, `${filename}.xlsx`);
+        }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
