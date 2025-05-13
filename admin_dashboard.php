@@ -135,7 +135,7 @@ $total_borrowed_books = $total_borrowed_books_result->fetch_assoc()['total'];
             <i class="bi bi-people-fill display-4 text-primary"></i>
             <h5 class="card-title mt-3">Manage Users</h5>
             <p class="card-text">View, edit, and manage all users in the system.</p>
-            <a href="#" class="btn btn-primary">Go to Users</a>
+            <a href="manage_users.php" class="btn btn-primary">Go to Users</a>
           </div>
         </div>
       </div>
