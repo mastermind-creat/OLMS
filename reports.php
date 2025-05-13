@@ -26,15 +26,21 @@ $total_borrowed_books_result = $conn->query($total_borrowed_books_sql);
 $total_borrowed_books = $total_borrowed_books_result->fetch_assoc()['total'];
 
 // Fetch borrowing trends
-$borrowing_trends_sql = "
-    SELECT DATE(borrowed_at) AS borrow_date, COUNT(*) AS borrow_count
+$frequent_categories_sql = "
+    SELECT categories.name AS category_name, COUNT(borrowed_books.id) AS borrow_count
     FROM borrowed_books
-    GROUP BY DATE(borrowed_at)
-    ORDER BY borrow_date ASC";
-$borrowing_trends_result = $conn->query($borrowing_trends_sql);
-$borrowing_trends = [];
-while ($row = $borrowing_trends_result->fetch_assoc()) {
-    $borrowing_trends[] = $row;
+    INNER JOIN books ON borrowed_books.book_id = books.id
+    INNER JOIN categories ON books.category_id = categories.id
+    GROUP BY categories.name
+    ORDER BY borrow_count DESC";
+$frequent_categories_result = $conn->query($frequent_categories_sql);
+
+// Prepare data for the chart
+$category_names = [];
+$category_borrow_counts = [];
+while ($row = $frequent_categories_result->fetch_assoc()) {
+    $category_names[] = $row['category_name'];
+    $category_borrow_counts[] = $row['borrow_count'];
 }
 
 // Handle user search and filter
@@ -80,6 +86,31 @@ $user_search_result = $conn->query($user_search_sql);
 
     <div class="container mt-5">
         <h2 class="text-center">Library Reports</h2>
+
+        <!-- Frequently Borrowed Categories Section -->
+        <div class="mt-5">
+            <h4>Frequently Borrowed Categories</h4>
+            <?php if (!empty($category_names)): ?>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Borrow Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($category_names as $index => $category_name): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($category_name); ?></td>
+                                <td><?= $category_borrow_counts[$index]; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p class="text-muted">No data available for borrowed categories.</p>
+            <?php endif; ?>
+        </div>
 
         <!-- Statistics Section -->
         <div class="row mt-4">

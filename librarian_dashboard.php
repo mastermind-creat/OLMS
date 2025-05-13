@@ -85,9 +85,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'librarian') {
         <div class="card text-center shadow-sm">
           <div class="card-body">
             <i class="bi bi-journal-arrow-down display-4 text-success"></i>
-            <h5 class="card-title mt-3">Return Books</h5>
+            <h5 class="card-title mt-3">Returned Books</h5>
             <p class="card-text">Manage book returns from members.</p>
-            <a href="#" class="btn btn-success">Return Books</a>
+            <a href="returned_books.php" class="btn btn-success">Return Books</a>
           </div>
         </div>
       </div>
