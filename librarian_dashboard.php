@@ -75,7 +75,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'librarian') {
             <i class="bi bi-journal-arrow-up display-4 text-primary"></i>
             <h5 class="card-title mt-3">Issue Books</h5>
             <p class="card-text">Issue books to library members.</p>
-            <a href="#" class="btn btn-primary">Issue Books</a>
+            <a href="issued_books.php" class="btn btn-primary">Issued Books</a>
           </div>
         </div>
       </div>
