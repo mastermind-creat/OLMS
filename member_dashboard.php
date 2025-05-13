@@ -12,14 +12,14 @@ include 'db_connection.php';
 $categories_sql = "SELECT * FROM categories ORDER BY name ASC";
 $categories_result = $conn->query($categories_sql);
 
-// Fetch borrowing history for the logged-in member
+// Fetch borrowing history for the logged-in member using the borrow_requests table
 $user_id = $_SESSION['user_id'];
 $history_sql = "
-    SELECT books.title, books.author, borrowed_books.days, borrowed_books.total_cost, borrowed_books.borrowed_at 
-    FROM borrowed_books
-    INNER JOIN books ON borrowed_books.book_id = books.id
-    WHERE borrowed_books.user_id = $user_id
-    ORDER BY borrowed_books.borrowed_at DESC";
+    SELECT books.title, books.author, borrow_requests.days, borrow_requests.total_cost, borrow_requests.requested_at 
+    FROM borrow_requests
+    INNER JOIN books ON borrow_requests.book_id = books.id
+    WHERE borrow_requests.user_id = $user_id AND borrow_requests.status = 'Book Issued'
+    ORDER BY borrow_requests.requested_at DESC";
 $history_result = $conn->query($history_sql);
 ?>
 
@@ -48,6 +48,10 @@ $history_result = $conn->query($history_sql);
         .book-card img {
             height: 150px;
             object-fit: cover;
+        }
+
+        .history-section {
+            margin-top: 50px;
         }
     </style>
 </head>
@@ -124,6 +128,36 @@ $history_result = $conn->query($history_sql);
                 <?php endwhile; ?>
             <?php else: ?>
                 <p>No categories found.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- Borrowing History Section -->
+        <div class="history-section">
+            <h4>Your Borrowing History</h4>
+            <?php if ($history_result->num_rows > 0): ?>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Author</th>
+                            <th>Days Borrowed</th>
+                            <!-- <th>Total Cost (Ksh)</th> -->
+                            <th>Borrowed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($history = $history_result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($history['title']); ?></td>
+                                <td><?= htmlspecialchars($history['author']); ?></td>
+                                <td><?= $history['days']; ?></td>
+                                <td><?= date('d M Y, h:i A', strtotime($history['requested_at'])); ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p class="text-muted">You have not borrowed any books yet.</p>
             <?php endif; ?>
         </div>
     </div>
