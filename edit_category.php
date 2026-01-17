@@ -1,12 +1,13 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'librarian') {
+// Allow both admin and librarian
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] != 'admin' && $_SESSION['role'] != 'librarian')) {
     header('Location: login.php');
     exit();
 }
 
-// Include the database connection file
-include 'db_connection.php';
+include 'includes/db_connection.php';
+include 'includes/header.php';
 
 $message = "";
 $category = null;
@@ -20,89 +21,66 @@ if (isset($_GET['id'])) {
     if ($result->num_rows > 0) {
         $category = $result->fetch_assoc();
     } else {
-        $message = "Category not found.";
+        echo "<div class='container mt-5'><div class='alert alert-danger'>Category not found.</div><a href='manage_categories.php' class='btn btn-secondary'>Back to Categories</a></div>";
+        include 'includes/footer.php';
+        exit();
     }
+} else {
+    header('Location: manage_categories.php');
+    exit();
 }
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id = intval($_POST['id']);
     $category_name = mysqli_real_escape_string($conn, $_POST['category_name']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
 
     $sql = "UPDATE categories SET name = '$category_name', description = '$description' WHERE id = $id";
 
     if ($conn->query($sql) === TRUE) {
-        $message = "Category updated successfully!";
+        $message = '<div class="alert alert-success">Category updated successfully! <a href="manage_categories.php" class="alert-link">Return to list</a></div>';
+        // Refresh data
+        $category = $conn->query("SELECT * FROM categories WHERE id = $id")->fetch_assoc();
     } else {
-        $message = "Error updating category: " . $conn->error;
+        $message = '<div class="alert alert-danger">Error updating category: ' . $conn->error . '</div>';
     }
 }
-
-$conn->close();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Category</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h2 class="text-center mb-4">Edit Category</h2>
+<div class="container fade-in" style="max-width: 700px;">
+    <div class="d-flex align-items-center mb-4 text-warning">
+        <a href="manage_categories.php" class="btn btn-link text-decoration-none p-0 me-3">
+            <i class="bi bi-arrow-left-circle fs-2 text-warning"></i>
+        </a>
+        <h2 class="fw-bold mb-0 text-dark">Edit Category</h2>
+    </div>
 
-    <?php if ($message): ?>
-        <div class="alert alert-info"><?= $message ?></div>
-    <?php endif; ?>
-
-    <?php if ($category): ?>
-        <div class="card">
-            <div class="card-body">
-                <form method="POST">
-                    <input type="hidden" name="id" value="<?= $category['id'] ?>">
-                    <div class="mb-3">
-                        <label for="category_name" class="form-label">Category Name</label>
-                        <input type="text" name="category_name" id="category_name" class="form-control" value="<?= htmlspecialchars($category['name']) ?>" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea name="description" id="description" class="form-control" rows="3" required><?= htmlspecialchars($category['description']) ?></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Update Category</button>
-                </form>
-            </div>
+    <div class="card shadow-lg border-0 overflow-hidden">
+        <div class="card-header bg-warning text-dark p-4 text-center">
+            <h3 class="mb-0 fw-bold"><i class="bi bi-pencil-fill"></i> Modify Category</h3>
         </div>
-    <?php else: ?>
-        <p class="text-center">No category found to edit.</p>
-    <?php endif; ?>
+        <div class="card-body p-5">
+            <?= $message ?>
 
-    <div class="mt-3 text-center">
-        <a href="manage_categories.php" class="btn btn-secondary">Back to Manage Categories</a>
+            <form method="POST">
+                <div class="mb-4">
+                    <label for="category_name" class="form-label fw-bold">Category Name</label>
+                    <input type="text" name="category_name" id="category_name" class="form-control form-control-lg" value="<?= htmlspecialchars($category['name']) ?>" required>
+                </div>
+                <div class="mb-4">
+                    <label for="description" class="form-label fw-bold">Description</label>
+                    <textarea name="description" id="description" class="form-control" rows="4" required><?= htmlspecialchars($category['description']) ?></textarea>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-warning btn-lg fw-bold">
+                        <i class="bi bi-save me-2"></i> Update Category
+                    </button>
+                    <a href="manage_categories.php" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>

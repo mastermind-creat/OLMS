@@ -1,12 +1,13 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'librarian') {
+// Allow both admin and librarian
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] != 'admin' && $_SESSION['role'] != 'librarian')) {
     header('Location: login.php');
     exit();
 }
 
-// Include the database connection file
-include 'db_connection.php';
+include 'includes/db_connection.php';
+include 'includes/header.php';
 
 $message = "";
 
@@ -14,81 +15,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category_name = mysqli_real_escape_string($conn, $_POST['category_name']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
 
-    $sql = "INSERT INTO categories (name, description) VALUES ('$category_name', '$description')";
-
-    if ($conn->query($sql) === TRUE) {
-        $message = "Category created successfully!";
+    // Check if exists
+    $check = $conn->query("SELECT id FROM categories WHERE name = '$category_name'");
+    if ($check->num_rows > 0) {
+        $message = '<div class="alert alert-warning">Category name already exists.</div>';
     } else {
-        $message = "Error: " . $conn->error;
+        $sql = "INSERT INTO categories (name, description) VALUES ('$category_name', '$description')";
+        if ($conn->query($sql) === TRUE) {
+            $message = '<div class="alert alert-success">Category created successfully! <a href="manage_categories.php" class="alert-link">Manage all categories here</a></div>';
+        } else {
+            $message = '<div class="alert alert-danger">Error: ' . $conn->error . '</div>';
+        }
     }
 }
-
-$conn->close();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Book Category</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .card-header {
-            background-color: #28a745;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-        .btn-success {
-            background-color: #28a745;
-            border: none;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="card">
-        <div class="card-header text-center">
-            Create Book Category
+<div class="container fade-in" style="max-width: 700px;">
+    <div class="d-flex align-items-center mb-4 text-primary">
+        <a href="manage_categories.php" class="btn btn-link text-decoration-none p-0 me-3">
+            <i class="bi bi-arrow-left-circle fs-2"></i>
+        </a>
+        <h2 class="fw-bold mb-0">Create Category</h2>
+    </div>
+
+    <div class="card shadow-lg border-0 overflow-hidden">
+        <div class="card-header bg-primary text-white p-4 text-center">
+            <h3 class="mb-0 fw-bold"><i class="bi bi-tag-fill"></i> New Book Category</h3>
         </div>
-        <div class="card-body">
-            <?php if ($message): ?>
-                <div class="alert alert-info"><?= $message ?></div>
-            <?php endif; ?>
+        <div class="card-body p-5">
+            <?= $message ?>
 
             <form method="POST">
-                <div class="mb-3">
-                    <label for="category_name" class="form-label">Category Name</label>
-                    <input type="text" name="category_name" id="category_name" class="form-control" required>
+                <div class="mb-4">
+                    <label for="category_name" class="form-label fw-bold">Category Name</label>
+                    <input type="text" name="category_name" id="category_name" class="form-control form-control-lg" required placeholder="e.g. Science Fiction, History...">
                 </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
+                <div class="mb-4">
+                    <label for="description" class="form-label fw-bold">Description</label>
+                    <textarea name="description" id="description" class="form-control" rows="4" required placeholder="Briefly describe what kind of books fall into this category..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-success w-100">Create Category</button>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle me-2"></i> Create Category
+                    </button>
+                    <a href="manage_categories.php" class="btn btn-outline-secondary">Cancel</a>
+                </div>
             </form>
         </div>
     </div>
-
-    <div class="mt-3 text-center">
-        <a href="librarian_dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
-    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>

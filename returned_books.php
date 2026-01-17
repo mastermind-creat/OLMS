@@ -5,8 +5,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'librarian') {
     exit();
 }
 
-// Include the database connection file
-include 'db_connection.php';
+include 'includes/db_connection.php';
+include 'includes/header.php';
 
 // Fetch all returned books
 $returned_books_sql = "
@@ -19,76 +19,90 @@ $returned_books_sql = "
 $returned_books_result = $conn->query($returned_books_sql);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<div class="container-fluid fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary">Returned Books</h2>
+            <p class="text-muted">History of returned books.</p>
+        </div>
+         <div>
+             <a href="issued_books.php" class="btn btn-outline-primary"><i class="bi bi-journal-arrow-up"></i> View Issued Books</a>
+        </div>
+    </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Returned Books</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-
-<body>
-    <div class="container mt-5">
-        <h2 class="text-center">Returned Books</h2>
-
-        <!-- Search Bar -->
-        <div class="mt-4 mb-3">
-            <input type="text" id="searchInput" class="form-control" placeholder="Search by member name or book title...">
+    <div class="card p-4 shadow-sm border-0">
+         <!-- Search -->
+        <div class="row mb-3">
+             <div class="col-md-4">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by member or book title...">
+            </div>
         </div>
 
-        <!-- Returned Books Table -->
-        <div class="mt-4">
+        <div class="table-responsive">
             <?php if ($returned_books_result->num_rows > 0): ?>
-                <table class="table table-striped" id="returnedBooksTable">
-                    <thead>
+                <table class="table table-hover align-middle" id="returnedBooksTable">
+                    <thead class="table-light">
                         <tr>
                             <th>Book Title</th>
                             <th>Member Name</th>
-                            <th>Days</th>
-                            <!-- <th>Total Cost (Ksh)</th> -->
-                            <th>Returned At</th>
+                            <th>Duration</th>
+                            <th>Returned Date</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php while ($book = $returned_books_result->fetch_assoc()): ?>
                             <tr>
-                                <td class="book-title"><?= htmlspecialchars($book['title']); ?></td>
-                                <td class="member-name"><?= htmlspecialchars($book['member_name']); ?></td>
-                                <td><?= $book['days']; ?></td>
+                                <td class="fw-bold text-primary book-title"><?= htmlspecialchars($book['title']); ?></td>
+                                <td class="member-name">
+                                     <div class="d-flex align-items-center">
+                                         <div class="bg-light-success rounded-circle d-flex align-items-center justify-content-center text-success fw-bold me-2" style="width: 30px; height: 30px;">
+                                            <?= substr(htmlspecialchars($book['member_name']), 0, 1) ?>
+                                        </div>
+                                        <?= htmlspecialchars($book['member_name']); ?>
+                                    </div>
+                                </td>
+                                <td><?= $book['days']; ?> days</td>
                                 <td><?= date('d M Y, h:i A', strtotime($book['updated_at'])); ?></td>
+                                <td><span class="badge bg-success">Returned</span></td>
                             </tr>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
             <?php else: ?>
-                <p class="text-muted text-center">No returned books found.</p>
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-check display-4 text-muted"></i>
+                    <p class="mt-3 text-muted">No books have been returned yet.</p>
+                </div>
             <?php endif; ?>
         </div>
-
-        <div class="mt-3 text-center">
-            <a href="librarian_dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
-        </div>
     </div>
+</div>
 
-    <script>
-        // Live Search Functionality
-        $(document).ready(function() {
-            $('#searchInput').on('keyup', function() {
-                var searchValue = $(this).val().toLowerCase();
-                $('#returnedBooksTable tbody tr').filter(function() {
-                    $(this).toggle(
-                        $(this).find('.book-title').text().toLowerCase().includes(searchValue) ||
-                        $(this).find('.member-name').text().toLowerCase().includes(searchValue)
-                    );
+<script>
+    // Live Search Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('returnedBooksTable');
+        
+        if(searchInput && table) {
+            searchInput.addEventListener('keyup', function() {
+                const searchValue = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const bookTitle = row.querySelector('.book-title').textContent.toLowerCase();
+                    const memberName = row.querySelector('.member-name').textContent.toLowerCase();
+                    
+                    if (bookTitle.includes(searchValue) || memberName.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
             });
-        });
-    </script>
+        }
+    });
+</script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+<?php include 'includes/footer.php'; ?>

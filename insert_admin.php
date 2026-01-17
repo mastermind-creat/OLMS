@@ -8,9 +8,9 @@ if ($conn->connect_error) {
 }
 
 // Insert admin user
-$hashedPassword = password_hash("admin123", PASSWORD_DEFAULT);
+$hashedPassword = password_hash("rich", PASSWORD_DEFAULT);
 $sql = "INSERT INTO users (name, email, password, role)
-        VALUES ('Admin User', 'admin@library.com', '$hashedPassword', 'admin')";
+        VALUES ('Richard', 'rich@library.com', '$hashedPassword', 'admin')";
 
 if ($conn->query($sql) === TRUE) {
     echo "Admin user inserted successfully!";
@@ -19,4 +19,3 @@ if ($conn->query($sql) === TRUE) {
 }
 
 $conn->close();
-?>

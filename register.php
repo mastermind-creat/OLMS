@@ -1,95 +1,102 @@
 <?php
 session_start();
+include 'includes/db_connection.php';
 
-$conn = new mysqli("localhost", "root", "", "library_db");
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+$message = "";
 
-$success = "";
-$error = "";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = $_POST['password'];
+    $role = 'member'; // Default role
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $name = mysqli_real_escape_string($conn, $_POST['name']);
-  $email = mysqli_real_escape_string($conn, $_POST['email']);
-  $password = $_POST['password'];
-  $confirm_password = $_POST['confirm_password'];
-
-  // Basic validation
-  if ($password !== $confirm_password) {
-    $error = "Passwords do not match.";
-  } else {
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-    // Check if user already exists
-    $check = mysqli_query($conn, "SELECT id FROM users WHERE email='$email'");
-    if (mysqli_num_rows($check) > 0) {
-      $error = "An account with this email already exists.";
+    // Check if email already exists
+    $check_email = $conn->query("SELECT id FROM users WHERE email = '$email'");
+    if ($check_email->num_rows > 0) {
+        $message = "Email already exists.";
     } else {
-      $sql = "INSERT INTO users (name, email, password, role)
-              VALUES ('$name', '$email', '$hashedPassword', 'member')";
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$hashed_password', '$role')";
 
-      if ($conn->query($sql) === TRUE) {
-        $success = "Registration successful! You can now <a href='login.php'>log in</a>.";
-      } else {
-        $error = "Something went wrong. Please try again.";
-      }
+        if ($conn->query($sql) === TRUE) {
+            header("Location: login.php?registered=true");
+            exit();
+        } else {
+            $message = "Error: " . $conn->error;
+        }
     }
-  }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Register - Online Library</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .register-container {
-      margin-top: 80px;
-      max-width: 450px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - OLMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .form-control {
+            background-color: #f0f4ff;
+            border: none;
+            height: 50px;
+            padding-left: 20px;
+        }
+        .form-control:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container d-flex justify-content-center">
-  <div class="register-container bg-white p-4 shadow rounded">
-    <h3 class="text-center mb-4">Create an Account</h3>
+<div class="register-card text-center">
+    <h2 class="fw-bold text-primary mb-1">Create Account</h2>
+    <p class="text-muted mb-4">Join our library community</p>
 
-    <?php if ($error): ?>
-      <div class="alert alert-danger"><?= $error ?></div>
-    <?php endif; ?>
-
-    <?php if ($success): ?>
-      <div class="alert alert-success"><?= $success ?></div>
+    <?php if($message): ?>
+        <div class="alert alert-danger py-2"><?= $message ?></div>
     <?php endif; ?>
 
     <form method="POST">
-      <div class="mb-3">
-        <label>Full Name</label>
-        <input type="text" name="name" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label>Email Address</label>
-        <input type="email" name="email" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label>Password</label>
-        <input type="password" name="password" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" class="form-control" required>
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Register</button>
+        <div class="mb-3 text-start">
+            <label class="form-label fw-bold small text-muted">Full Name</label>
+            <input type="text" name="name" class="form-control rounded-3" placeholder="John Doe" required>
+        </div>
+        <div class="mb-3 text-start">
+            <label class="form-label fw-bold small text-muted">Email Address</label>
+            <input type="email" name="email" class="form-control rounded-3" placeholder="name@example.com" required>
+        </div>
+        <div class="mb-4 text-start">
+            <label class="form-label fw-bold small text-muted">Password</label>
+            <input type="password" name="password" class="form-control rounded-3" placeholder="Create a password" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 btn-lg shadow mb-3" style="border-radius: 10px;">Sign Up</button>
     </form>
-
-    <div class="mt-3 text-center">
-      <a href="login.php">Already have an account? Login</a>
-    </div>
-  </div>
+    
+    <p class="text-muted mb-0">Already have an account? <a href="login.php" class="text-primary fw-bold text-decoration-none">Login</a></p>
 </div>
 
 </body>

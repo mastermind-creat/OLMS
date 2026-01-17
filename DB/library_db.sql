@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 13, 2025 at 02:38 PM
+-- Host: localhost
+-- Generation Time: Jan 17, 2026 at 07:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -46,7 +46,8 @@ INSERT INTO `books` (`id`, `title`, `author`, `category_id`, `isbn`, `quantity`,
 (1, 'Dune', 'Frank Herbert', 1, '9780441013593', 199, '2025-04-23 11:21:06', 'uploads/book_covers/dune.jpg'),
 (2, 'Kigogo', 'Pauline Keya', 2, '9780441013593', 160, '2025-05-13 07:07:27', 'uploads/book_covers/kigogo.webp'),
 (3, 'The Hunger Games', 'Suzanne Collins', 1, '9380441013789', 28, '2025-05-13 09:52:44', 'uploads/book_covers/hungergames.webp'),
-(4, 'Sunrise on the Reaping', 'Suzanne Collins', 1, '9380441013780', 1, '2025-05-13 12:14:12', 'uploads/book_covers/sunrise.jpeg');
+(4, 'Sunrise on the Reaping', 'Suzanne Collins', 1, '9380441013780', 0, '2025-05-13 12:14:12', 'uploads/book_covers/sunrise.jpeg'),
+(7, 'Echoes of War', 'Tania Blanchard', 3, '9782371991626', 10, '2026-01-17 18:48:21', 'uploads/book_covers/1768675701_c87cfeac.jpg');
 
 -- --------------------------------------------------------
 
@@ -97,7 +98,8 @@ INSERT INTO `borrow_requests` (`id`, `book_id`, `user_id`, `days`, `total_cost`,
 (2, 2, 2, 2, 100.00, 'Book Issued', '2025-05-13 12:03:43', '2025-05-13 12:04:02'),
 (3, 3, 2, 1, 50.00, 'Book Issued', '2025-05-13 12:11:56', '2025-05-13 12:36:30'),
 (4, 4, 2, 2, 100.00, 'Book Returned', '2025-05-13 12:14:35', '2025-05-13 12:22:36'),
-(5, 1, 2, 3, 150.00, 'Book Issued', '2025-05-13 12:36:12', '2025-05-13 12:36:33');
+(5, 1, 2, 3, 150.00, 'Book Issued', '2025-05-13 12:36:12', '2025-05-13 12:36:33'),
+(6, 4, 2, 3, 150.00, 'pending', '2026-01-16 20:39:37', '2026-01-16 20:39:37');
 
 -- --------------------------------------------------------
 
@@ -118,7 +120,23 @@ CREATE TABLE `categories` (
 
 INSERT INTO `categories` (`id`, `name`, `description`, `created_at`) VALUES
 (1, 'Sci-Fi', 'Science Fiction', '2025-04-23 11:14:41'),
-(2, 'Set Books', 'Educational Novels', '2025-05-13 07:06:13');
+(2, 'Set Books', 'Educational Novels', '2025-05-13 07:06:13'),
+(3, 'Horror', 'Horror books', '2026-01-17 18:47:18'),
+(4, 'Romance', 'Love Books', '2026-01-17 18:47:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `message` text NOT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -142,7 +160,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
 (1, 'Admin User', 'admin@library.com', '$2y$10$U/qAQWGTbw/mEFqnqF87pODuzznF3Cpd0S.IiyGDjbF6/Nnak7v6u', 'admin', '2025-04-23 10:46:51'),
 (2, 'Martha Atieno', 'marthaatieno631@gmail.com', '$2y$10$qsT8UfcUE5wRw8LIcEIz5.RMumtbW6MV6.pTG1B5lZDzEsL0LalDa', 'member', '2025-04-23 10:51:13'),
-(3, 'Kennedy Wambia', 'librarian@library.com', '$2y$10$emoGJHjHrxUOU05ELxCnP.W1jeUfYn/Kg7NVOnnlvL0yfmJV3yPg6', 'librarian', '2025-04-23 10:59:35');
+(3, 'Kennedy Wambia', 'librarian@library.com', '$2y$10$emoGJHjHrxUOU05ELxCnP.W1jeUfYn/Kg7NVOnnlvL0yfmJV3yPg6', 'librarian', '2025-04-23 10:59:35'),
+(4, 'Mercy Johnson', 'mercy@library.com', '$2y$10$Y2uKSmB7dw4FFOa92rpKI.gMZ8/jkM82rWbKyMdGe0DzIiXTSGOca', 'librarian', '2026-01-17 18:07:09');
 
 --
 -- Indexes for dumped tables
@@ -178,6 +197,12 @@ ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -192,7 +217,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `books`
 --
 ALTER TABLE `books`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `borrowed_books`
@@ -204,19 +229,25 @@ ALTER TABLE `borrowed_books`
 -- AUTO_INCREMENT for table `borrow_requests`
 --
 ALTER TABLE `borrow_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables
