@@ -8,6 +8,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'member') {
 include 'includes/db_connection.php';
 include 'includes/header.php';
 
+$user_id = $_SESSION['user_id'];
+$issued_books_count = $conn->query("SELECT COUNT(*) as count FROM borrow_requests WHERE user_id = $user_id AND status = 'Book Issued'")->fetch_assoc()['count'];
+$can_borrow = $issued_books_count < 2;
+
 // Pagination setup
 $limit = 12; // 12 items for grid (3x4 or 4x3)
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -53,6 +57,12 @@ $categories = $conn->query("SELECT * FROM categories ORDER BY name ASC");
             <h2 class="fw-bold text-primary">Browse Library</h2>
             <p class="text-muted">Find your next read from our collection.</p>
         </div>
+        <?php if (!$can_borrow): ?>
+            <div class="alert alert-warning py-2 shadow-sm border-0 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span>You've reached your limit of 2 books. Return some to borrow more.</span>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Filters -->
@@ -108,7 +118,11 @@ $categories = $conn->query("SELECT * FROM categories ORDER BY name ASC");
                             
                             <div class="mt-auto">
                                 <?php if($book['quantity'] > 0): ?>
-                                    <a href="borrow_book.php?book_id=<?= $book['id'] ?>" class="btn btn-outline-primary w-100 fw-bold">Borrow Book</a>
+                                    <?php if($can_borrow): ?>
+                                        <a href="borrow_book.php?book_id=<?= $book['id'] ?>" class="btn btn-outline-primary w-100 fw-bold">Borrow Book</a>
+                                    <?php else: ?>
+                                        <button class="btn btn-light text-muted w-100 fw-bold" disabled title="Limit Reached">Borrow Book</button>
+                                    <?php     endif; ?>
                                 <?php else: ?>
                                     <button class="btn btn-light text-muted w-100" disabled>Unavailable</button>
                                 <?php endif; ?>

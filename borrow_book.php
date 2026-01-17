@@ -26,14 +26,19 @@ if ($book_id > 0) {
 // Handle Borrow Request
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $book) {
     $days = intval($_POST['days']);
-    $total_cost = $days * 50; // Pricing logic: 50 per day (can be dynamic)
+    $total_cost = $days * 50; // Pricing logic: 50 per day
 
-    if ($book['quantity'] > 0) {
+    // NEW: Check if user already has 2 or more books issued
+    $issued_books_check = $conn->query("SELECT COUNT(*) as count FROM borrow_requests WHERE user_id = $user_id AND status = 'Book Issued'")->fetch_assoc()['count'];
+    
+    if ($issued_books_check >= 2) {
+        $error = "You cannot borrow more than 2 books. Please return your current books first.";
+    } elseif ($book['quantity'] > 0) {
         // Start Transaction
         $conn->begin_transaction();
         try {
             // Create Borrow Request
-            $stmt = $conn->prepare("INSERT INTO borrow_requests (book_id, user_id, days, total_cost, status, requested_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
+            $stmt = $conn->prepare("INSERT INTO borrow_requests (book_id, user_id, days, total_cost, status, requested_at) VALUES (?, ?, ?, ?, 'Pending', NOW())");
             $stmt->bind_param("iiid", $book_id, $user_id, $days, $total_cost);
             $stmt->execute();
 
@@ -64,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $book) {
             <div class="row g-0">
                 <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4">
                      <!-- Book Cover Placeholder or Image -->
-                    <?php if (!empty($book['cover_image'])): ?>
-                        <img src="<?= htmlspecialchars($book['cover_image']) ?>" class="img-fluid shadow rounded" alt="<?= htmlspecialchars($book['title']) ?>" style="max-height: 300px;">
+                    <?php if (!empty($book['cover_photo'])): ?>
+                        <img src="<?= htmlspecialchars($book['cover_photo']) ?>" class="img-fluid shadow rounded" alt="<?= htmlspecialchars($book['title']) ?>" style="max-height: 300px;">
                     <?php else: ?>
                         <div class="text-center text-muted">
                             <i class="bi bi-book display-1"></i>
@@ -81,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $book) {
                                 <p class="text-muted mb-0">by <span class="fw-semibold text-dark"><?= htmlspecialchars($book['author']) ?></span></p>
                             </div>
                             <span class="badge bg-light-info text-info rounded-pill px-3 py-2">
-                                <?= $book['quantity'] > 0 ? 'In Stock' : 'Out of Stock' ?>
+                                <?= $book['quantity'] > 0 ? 'In Library' : 'Out of Stock' ?>
                             </span>
                         </div>
                         
@@ -112,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $book) {
                                         <input type="number" name="days" id="days" class="form-control" min="1" max="30" value="7" required>
                                         <span class="input-group-text bg-light">Days</span>
                                     </div>
-                                    <div class="form-text mt-2">Estimated Cost: <span class="fw-bold text-dark" id="costPreview">Ksh. 350</span></div>
                                 </div>
 
                                 <div class="d-grid gap-2">
@@ -139,18 +143,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $book) {
         </div>
     <?php endif; ?>
 </div>
-
-<script>
-    // Simple Cost Estimator Script
-    const daysInput = document.getElementById('days');
-    const costPreview = document.getElementById('costPreview');
-    if (daysInput && costPreview) {
-        daysInput.addEventListener('input', function() {
-            const days = parseInt(this.value) || 0;
-            const cost = days * 50;
-            costPreview.textContent = `Ksh. ${cost}`;
-        });
-    }
-</script>
 
 <?php include 'includes/footer.php'; ?>

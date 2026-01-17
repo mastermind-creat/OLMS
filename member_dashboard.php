@@ -11,8 +11,9 @@ include 'includes/header.php';
 $user_id = $_SESSION['user_id'];
 
 // Fetch stats for member
-$borrowed_books_count = $conn->query("SELECT COUNT(*) as count FROM borrowed_books WHERE user_id = $user_id")->fetch_assoc()['count'];
+$borrowed_books_count = $conn->query("SELECT COUNT(*) as count FROM borrow_requests WHERE user_id = $user_id AND status = 'Book Issued'")->fetch_assoc()['count'];
 $pending_requests_count = $conn->query("SELECT COUNT(*) as count FROM borrow_requests WHERE user_id = $user_id AND status = 'Pending'")->fetch_assoc()['count'];
+$can_borrow = $borrowed_books_count < 2;
 
 // Fetch available books with category names
 $books_sql = "SELECT b.*, c.name as category_name FROM books b LEFT JOIN categories c ON b.category_id = c.id WHERE b.quantity > 0 ORDER BY b.id DESC LIMIT 8";
@@ -88,9 +89,13 @@ $history_result = $conn->query($history_sql);
                             <h6 class="card-title fw-bold text-truncate" title="<?= htmlspecialchars($book['title']) ?>"><?= htmlspecialchars($book['title']) ?></h6>
                             <p class="card-text small text-muted mb-auto">By <?= htmlspecialchars($book['author']) ?></p>
                             
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="badge bg-success">In Stock: <?= $book['quantity'] ?></span>
-                                <a href="borrow_book.php?book_id=<?= $book['id'] ?>" class="btn btn-primary btn-sm">Borrow</a>
+                             <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge bg-success">In Library: <?= $book['quantity'] ?></span>
+                                <?php if($can_borrow): ?>
+                                    <a href="borrow_book.php?book_id=<?= $book['id'] ?>" class="btn btn-primary btn-sm">Borrow</a>
+                                <?php else: ?>
+                                    <button class="btn btn-light btn-sm text-muted" disabled title="Limit Reached">Borrow</button>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
