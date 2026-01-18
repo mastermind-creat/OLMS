@@ -85,6 +85,7 @@ $total_pages = ceil($total_rows / $limit);
                                 </td>
                                 <td>
                                     <?php if ($user['role'] != 'admin' || $user['id'] != $_SESSION['user_id']): ?>
+                                        <a href="edit_user.php?id=<?= $user['id'] ?>" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>
                                         <a href="manage_users.php?delete_id=<?= $user['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this user?');"><i class="bi bi-trash"></i> Delete</a>
                                     <?php else: ?>
                                         <span class="text-muted small">Current User</span>

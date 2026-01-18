@@ -55,9 +55,12 @@ $notifications = getUnreadNotifications($conn, $user_id);
                             <li><a class="dropdown-item text-wrap small" href="#"><?= htmlspecialchars($notif['message']) ?></a></li>
                         <?php endforeach; ?>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small text-primary" href="mark_read.php">Mark all as read</a></li>
+                        <li><a class="dropdown-item text-center small text-primary" href="mark_read.php?action=mark_all_read">Mark all as read</a></li>
+                        <li><a class="dropdown-item text-center small text-muted" href="notifications.php">View all notifications</a></li>
                     <?php else: ?>
                         <li><span class="dropdown-item text-muted small">No new notifications</span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-center small text-muted" href="notifications.php">View all notifications</a></li>
                     <?php endif; ?>
                 </ul>
             </div>

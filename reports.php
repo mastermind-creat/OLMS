@@ -108,7 +108,7 @@ if (isset($_GET['generate'])) {
             <button class="nav-link <?= (!isset($_GET['generate'])) ? 'active' : '' ?>" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview Dashboard</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link <?= (isset($_GET['generate'])) ? 'active' : '' ?>" id="detailed-tab" data-bs-toggle="tab" data-bs-target="#detailed" type="button" role="tab">Detailed Reports</button>
+            <button class="nav-link <?= (isset($_GET['generate'])) ? 'active' : '' ?>" id="detailed-tab" data-bs-toggle="tab" data-bs-target="#detailed" type="button" role="tab">Library Reports</button>
         </li>
     </ul>
 

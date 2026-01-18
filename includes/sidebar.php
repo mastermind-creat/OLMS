@@ -54,6 +54,9 @@ elseif ($role == 'member') $dashboard_link = 'member_dashboard.php';
             <a href="manage_borrow_requests.php" class="<?= $current_page == 'manage_borrow_requests.php' ? 'active' : '' ?>">
                 <i class="bi bi-bell"></i> Requests
             </a>
+            <a href="reports.php" class="<?= $current_page == 'reports.php' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up"></i> Reports
+            </a>
         <?php endif; ?>
 
         <?php if ($role == 'member'): ?>

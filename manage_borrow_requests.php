@@ -15,46 +15,83 @@ if (isset($_GET['action']) && isset($_GET['request_id'])) {
     $success_msg = "";
     $error_msg = "";
 
+    // Helper to get request details
+    $get_request_details = function($conn, $request_id) {
+        $sql = "SELECT br.user_id, br.book_id, b.title as book_title, br.status 
+                FROM borrow_requests br 
+                JOIN books b ON br.book_id = b.id 
+                WHERE br.id = $request_id";
+        return $conn->query($sql)->fetch_assoc();
+    };
+
+    // Consolidate Restocking Logic
+    $restock_book = function($conn, $request_id) {
+        $check_sql = "SELECT book_id, status FROM borrow_requests WHERE id = $request_id";
+        $check_result = $conn->query($check_sql);
+        if ($check_result && $check_result->num_rows > 0) {
+            $row = $check_result->fetch_assoc();
+            // Important: Only restock if it was previously Issued or Pending to avoid double increment
+            // Actually, we usually restock on Reject (if it was Pending) or Return (if it was Issued)
+            $book_id = $row['book_id'];
+            $update_quantity_sql = "UPDATE books SET quantity = quantity + 1 WHERE id = $book_id";
+            return $conn->query($update_quantity_sql);
+        }
+        return false;
+    };
+
     if ($action === 'approve') {
+        $details = $get_request_details($conn, $request_id);
         $approve_sql = "UPDATE borrow_requests SET status = 'Book Issued' WHERE id = $request_id";
-        if ($conn->query($approve_sql) === TRUE) {
+        if ($details && $conn->query($approve_sql) === TRUE) {
+            logAudit($conn, $_SESSION['user_id'], "Approve Borrow", "Approved request ID $request_id");
+            addNotification($conn, $details['user_id'], "Your request for '{$details['book_title']}' has been approved. Please collect it.");
             $success_msg = "Request approved! Book issued successfully.";
         } else {
             $error_msg = "Error approving request: " . $conn->error;
         }
     } elseif ($action === 'reject') {
-        // Reject the request and set status to "Rejected"
-        $reject_sql = "UPDATE borrow_requests SET status = 'Rejected' WHERE id = $request_id";
-        if ($conn->query($reject_sql) === TRUE) {
-            // Restore book quantity since the request is rejected
-            $book_id_sql = "SELECT book_id FROM borrow_requests WHERE id = $request_id";
-            $book_id_result = $conn->query($book_id_sql);
-            if ($book_id_result->num_rows > 0) {
-                $book_id = $book_id_result->fetch_assoc()['book_id'];
-                $update_quantity_sql = "UPDATE books SET quantity = quantity + 1 WHERE id = $book_id";
-                $conn->query($update_quantity_sql);
+        $details = $get_request_details($conn, $request_id);
+        if ($details['status'] === 'Pending') {
+            $reject_sql = "UPDATE borrow_requests SET status = 'Rejected' WHERE id = $request_id";
+            if ($conn->query($reject_sql) === TRUE) {
+                logAudit($conn, $_SESSION['user_id'], "Reject Borrow", "Rejected request ID $request_id");
+                $restock_book($conn, $request_id);
+                addNotification($conn, $details['user_id'], "Your request for '{$details['book_title']}' was rejected.");
+                $success_msg = "Request rejected. Book stock restored.";
+            } else {
+                $error_msg = "Error rejecting request: " . $conn->error;
             }
-            $success_msg = "Request rejected. Book stock restored.";
         } else {
-            $error_msg = "Error rejecting request: " . $conn->error;
+            $error_msg = "Cannot reject a request that is already " . $details['status'];
         }
     } elseif ($action === 'return') {
-        $return_sql = "UPDATE borrow_requests SET status = 'Book Returned' WHERE id = $request_id";
-        if ($conn->query($return_sql) === TRUE) {
-            // Restore book quantity
-            $book_id_sql = "SELECT book_id FROM borrow_requests WHERE id = $request_id";
-            $book_id_result = $conn->query($book_id_sql);
-            if ($book_id_result->num_rows > 0) {
-                $book_id = $book_id_result->fetch_assoc()['book_id'];
-                $update_quantity_sql = "UPDATE books SET quantity = quantity + 1 WHERE id = $book_id";
-                $conn->query($update_quantity_sql);
+        $details = $get_request_details($conn, $request_id);
+        if ($details['status'] === 'Book Issued') {
+            $return_sql = "UPDATE borrow_requests SET status = 'Book Returned' WHERE id = $request_id";
+            if ($conn->query($return_sql) === TRUE) {
+                logAudit($conn, $_SESSION['user_id'], "Book Return", "Processed return for request ID $request_id");
+                $restock_book($conn, $request_id);
+                addNotification($conn, $details['user_id'], "You have successfully returned '{$details['book_title']}'. Thank you!");
+                $success_msg = "Book marked as returned. Quantity updated.";
+            } else {
+                $error_msg = "Error processing return: " . $conn->error;
             }
-            $success_msg = "Book marked as returned. Quantity updated.";
         } else {
-             $error_msg = "Error processing return: " . $conn->error;
+            $error_msg = "Cannot return a book that is already " . $details['status'];
         }
     }
+
+    // Redirect to prevent form resubmission/refresh issues
+    if ($success_msg) {
+        $_SESSION['success_msg'] = $success_msg;
+        echo "<script>window.location.href='manage_borrow_requests.php';</script>";
+        exit();
+    }
 }
+
+// Support for session-based messages
+$success_msg = $_SESSION['success_msg'] ?? "";
+unset($_SESSION['success_msg']);
 
 // Fetch borrow requests
 $borrow_requests_sql = "

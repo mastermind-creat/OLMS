@@ -55,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 VALUES ('$title', '$author', $category_id, '$isbn', $quantity, '$cover_photo')";
 
         if ($conn->query($sql) === TRUE) {
+            logAudit($conn, $_SESSION['user_id'], "Add Book", "Added book: $title (ISBN: $isbn)");
             $message = '<div class="alert alert-success">Book added successfully!</div>';
         } else {
             $message = '<div class="alert alert-danger">Database Error: ' . $conn->error . '</div>';

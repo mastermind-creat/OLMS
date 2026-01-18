@@ -16,6 +16,9 @@
                     <a class="nav-link" href="manage_users.php">Manage Users</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="audit_trail.php">Audit Trail</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="logout.php">Logout</a>
                 </li>
             </ul>

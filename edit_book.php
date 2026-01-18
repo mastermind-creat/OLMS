@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_sql = "UPDATE books SET title='$title', author='$author', category_id=$category_id, isbn='$isbn', quantity=$quantity, cover_photo='$cover_photo' WHERE id=$id";
 
         if ($conn->query($update_sql) === TRUE) {
+            logAudit($conn, $_SESSION['user_id'], "Edit Book", "Updated book ID $id: $title (ISBN: $isbn)");
             $message = '<div class="alert alert-success">Book updated successfully!</div>';
             // Refresh book data
             $book = $conn->query("SELECT * FROM books WHERE id = $id")->fetch_assoc();

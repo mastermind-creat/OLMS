@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $sql = "INSERT INTO categories (name, description) VALUES ('$category_name', '$description')";
         if ($conn->query($sql) === TRUE) {
+            logAudit($conn, $_SESSION['user_id'], "Create Category", "Created category: $category_name");
             $message = '<div class="alert alert-success">Category created successfully! <a href="manage_categories.php" class="alert-link">Manage all categories here</a></div>';
         } else {
             $message = '<div class="alert alert-danger">Error: ' . $conn->error . '</div>';

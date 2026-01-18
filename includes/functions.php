@@ -55,4 +55,15 @@ function markNotificationsAsRead($conn, $user_id) {
         $stmt->close();
     }
 }
+function logAudit($conn, $user_id, $action, $details = "") {
+    if (!$conn) return;
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+    $sql = "INSERT INTO audit_trail (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param("isss", $user_id, $action, $details, $ip_address);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
 ?>

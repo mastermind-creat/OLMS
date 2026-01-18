@@ -14,16 +14,25 @@ $error = "";
 
 // Handle Profile Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $phone = isset($_POST['phone']) ? mysqli_real_escape_string($conn, $_POST['phone']) : '';
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'] ?? '';
 
-    $update_sql = "UPDATE users SET name = '$name', email = '$email', phone = '$phone' WHERE id = $user_id";
-    if ($conn->query($update_sql) === TRUE) {
-        $_SESSION['name'] = $name; // Update session name
-        $message = "Profile updated successfully!";
+    // Use prepared statements for security
+    $update_sql = "UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?";
+    $stmt = $conn->prepare($update_sql);
+    if ($stmt) {
+        $stmt->bind_param("sssi", $name, $email, $phone, $user_id);
+        if ($stmt->execute()) {
+            $_SESSION['name'] = $name; // Update session name
+            $message = "Profile updated successfully!";
+            logAudit($conn, $user_id, "Update Profile", "Updated own profile details.");
+        } else {
+            $error = "Error updating profile: " . $stmt->error;
+        }
+        $stmt->close();
     } else {
-        $error = "Error updating profile: " . $conn->error;
+        $error = "Database error: " . $conn->error;
     }
 }
 

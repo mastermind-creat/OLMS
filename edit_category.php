@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sql = "UPDATE categories SET name = '$category_name', description = '$description' WHERE id = $id";
 
     if ($conn->query($sql) === TRUE) {
+        logAudit($conn, $_SESSION['user_id'], "Edit Category", "Updated category ID $id: $category_name");
         $message = '<div class="alert alert-success">Category updated successfully! <a href="manage_categories.php" class="alert-link">Return to list</a></div>';
         // Refresh data
         $category = $conn->query("SELECT * FROM categories WHERE id = $id")->fetch_assoc();

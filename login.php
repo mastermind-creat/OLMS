@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'includes/db_connection.php';
+include 'includes/functions.php';
 
 $message = "";
 
@@ -44,17 +45,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             if ($user['role'] == 'admin') {
+                logAudit($conn, $user['id'], "User Login", "Admin logged in");
                 header("Location: admin_dashboard.php");
             } elseif ($user['role'] == 'librarian') {
+                logAudit($conn, $user['id'], "User Login", "Librarian logged in");
                 header("Location: librarian_dashboard.php");
             } else {
+                logAudit($conn, $user['id'], "User Login", "Member logged in");
                 header("Location: member_dashboard.php");
             }
             exit();
         } else {
+            logAudit($conn, $user['id'], "Failed Login", "Invalid password for email: $email");
             $message = "Invalid password.";
         }
     } else {
+        logAudit($conn, null, "Failed Login", "User not found for email: $email");
         $message = "User not found.";
     }
 }
