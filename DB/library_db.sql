@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 17, 2026 at 07:53 PM
+-- Generation Time: Jan 18, 2026 at 03:25 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,48 @@ SET time_zone = "+00:00";
 --
 -- Database: `library_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `audit_trail`
+--
+
+CREATE TABLE `audit_trail` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `action` varchar(255) NOT NULL,
+  `details` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `audit_trail`
+--
+
+INSERT INTO `audit_trail` (`id`, `user_id`, `action`, `details`, `ip_address`, `created_at`) VALUES
+(1, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 11:59:04'),
+(2, 1, 'Test Action', 'This is a test log entry from verify script', 'UNKNOWN', '2026-01-18 11:59:23'),
+(3, NULL, 'Guest Action', 'System generated test entry', 'UNKNOWN', '2026-01-18 11:59:23'),
+(4, 2, 'Failed Login', 'Verify test for failed login', 'UNKNOWN', '2026-01-18 11:59:23'),
+(5, 2, 'User Login', 'Member logged in', '::1', '2026-01-18 12:01:33'),
+(6, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 12:01:42'),
+(7, 3, 'Approve Borrow', 'Approved request ID 6', '::1', '2026-01-18 12:01:54'),
+(8, 2, 'User Login', 'Member logged in', '::1', '2026-01-18 12:02:02'),
+(9, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 12:02:27'),
+(10, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 12:29:47'),
+(11, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 12:56:43'),
+(12, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 12:58:21'),
+(13, 2, 'User Login', 'Member logged in', '::1', '2026-01-18 12:59:33'),
+(14, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 13:16:51'),
+(15, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 13:19:52'),
+(16, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 13:20:49'),
+(17, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 13:21:34'),
+(18, 3, 'Update Profile', 'Updated own profile details.', '::1', '2026-01-18 13:27:49'),
+(19, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 13:28:05'),
+(20, 1, 'User Login', 'Admin logged in', '::1', '2026-01-18 13:37:22'),
+(21, 3, 'User Login', 'Librarian logged in', '::1', '2026-01-18 13:43:07');
 
 -- --------------------------------------------------------
 
@@ -43,10 +85,10 @@ CREATE TABLE `books` (
 --
 
 INSERT INTO `books` (`id`, `title`, `author`, `category_id`, `isbn`, `quantity`, `created_at`, `cover_photo`) VALUES
-(1, 'Dune', 'Frank Herbert', 1, '9780441013593', 199, '2025-04-23 11:21:06', 'uploads/book_covers/dune.jpg'),
-(2, 'Kigogo', 'Pauline Keya', 2, '9780441013593', 160, '2025-05-13 07:07:27', 'uploads/book_covers/kigogo.webp'),
-(3, 'The Hunger Games', 'Suzanne Collins', 1, '9380441013789', 28, '2025-05-13 09:52:44', 'uploads/book_covers/hungergames.webp'),
-(4, 'Sunrise on the Reaping', 'Suzanne Collins', 1, '9380441013780', 0, '2025-05-13 12:14:12', 'uploads/book_covers/sunrise.jpeg'),
+(1, 'Dune', 'Frank Herbert', 1, '9780441013593', 200, '2025-04-23 11:21:06', 'uploads/book_covers/dune.jpg'),
+(2, 'Kigogo', 'Pauline Keya', 2, '9780441013593', 161, '2025-05-13 07:07:27', 'uploads/book_covers/kigogo.webp'),
+(3, 'The Hunger Games', 'Suzanne Collins', 1, '9380441013789', 29, '2025-05-13 09:52:44', 'uploads/book_covers/hungergames.webp'),
+(4, 'Sunrise on the Reaping', 'Suzanne Collins', 1, '9380441013780', 5, '2025-05-13 12:14:12', 'uploads/book_covers/sunrise.jpeg'),
 (7, 'Echoes of War', 'Tania Blanchard', 3, '9782371991626', 10, '2026-01-17 18:48:21', 'uploads/book_covers/1768675701_c87cfeac.jpg');
 
 -- --------------------------------------------------------
@@ -95,11 +137,11 @@ CREATE TABLE `borrow_requests` (
 
 INSERT INTO `borrow_requests` (`id`, `book_id`, `user_id`, `days`, `total_cost`, `status`, `requested_at`, `updated_at`) VALUES
 (1, 1, 2, 3, 150.00, 'Book Returned', '2025-05-13 08:05:32', '2025-05-13 09:45:32'),
-(2, 2, 2, 2, 100.00, 'Book Issued', '2025-05-13 12:03:43', '2025-05-13 12:04:02'),
-(3, 3, 2, 1, 50.00, 'Book Issued', '2025-05-13 12:11:56', '2025-05-13 12:36:30'),
+(2, 2, 2, 2, 100.00, 'Book Returned', '2025-05-13 12:03:43', '2026-01-17 19:45:28'),
+(3, 3, 2, 1, 50.00, 'Book Returned', '2025-05-13 12:11:56', '2026-01-17 19:45:21'),
 (4, 4, 2, 2, 100.00, 'Book Returned', '2025-05-13 12:14:35', '2025-05-13 12:22:36'),
-(5, 1, 2, 3, 150.00, 'Book Issued', '2025-05-13 12:36:12', '2025-05-13 12:36:33'),
-(6, 4, 2, 3, 150.00, 'pending', '2026-01-16 20:39:37', '2026-01-16 20:39:37');
+(5, 1, 2, 3, 150.00, 'Book Returned', '2025-05-13 12:36:12', '2026-01-17 19:45:26'),
+(6, 4, 2, 3, 150.00, 'Book Issued', '2026-01-16 20:39:37', '2026-01-18 12:01:54');
 
 -- --------------------------------------------------------
 
@@ -122,7 +164,8 @@ INSERT INTO `categories` (`id`, `name`, `description`, `created_at`) VALUES
 (1, 'Sci-Fi', 'Science Fiction', '2025-04-23 11:14:41'),
 (2, 'Set Books', 'Educational Novels', '2025-05-13 07:06:13'),
 (3, 'Horror', 'Horror books', '2026-01-17 18:47:18'),
-(4, 'Romance', 'Love Books', '2026-01-17 18:47:30');
+(4, 'Romance', 'Love Books', '2026-01-17 18:47:30'),
+(5, 'Thriller', 'thriller books', '2026-01-17 19:37:23');
 
 -- --------------------------------------------------------
 
@@ -148,6 +191,7 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `role` enum('admin','librarian','member') DEFAULT 'member',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -157,15 +201,23 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
-(1, 'Admin User', 'admin@library.com', '$2y$10$U/qAQWGTbw/mEFqnqF87pODuzznF3Cpd0S.IiyGDjbF6/Nnak7v6u', 'admin', '2025-04-23 10:46:51'),
-(2, 'Martha Atieno', 'marthaatieno631@gmail.com', '$2y$10$qsT8UfcUE5wRw8LIcEIz5.RMumtbW6MV6.pTG1B5lZDzEsL0LalDa', 'member', '2025-04-23 10:51:13'),
-(3, 'Kennedy Wambia', 'librarian@library.com', '$2y$10$emoGJHjHrxUOU05ELxCnP.W1jeUfYn/Kg7NVOnnlvL0yfmJV3yPg6', 'librarian', '2025-04-23 10:59:35'),
-(4, 'Mercy Johnson', 'mercy@library.com', '$2y$10$Y2uKSmB7dw4FFOa92rpKI.gMZ8/jkM82rWbKyMdGe0DzIiXTSGOca', 'librarian', '2026-01-17 18:07:09');
+INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `created_at`) VALUES
+(1, 'Admin User', 'admin@library.com', NULL, '$2y$10$U/qAQWGTbw/mEFqnqF87pODuzznF3Cpd0S.IiyGDjbF6/Nnak7v6u', 'admin', '2025-04-23 10:46:51'),
+(2, 'Martha Atieno', 'marthaatieno631@gmail.com', NULL, '$2y$10$qsT8UfcUE5wRw8LIcEIz5.RMumtbW6MV6.pTG1B5lZDzEsL0LalDa', 'member', '2025-04-23 10:51:13'),
+(3, 'Michael Mabeya', 'librarian@library.com', '', '$2y$10$emoGJHjHrxUOU05ELxCnP.W1jeUfYn/Kg7NVOnnlvL0yfmJV3yPg6', 'librarian', '2025-04-23 10:59:35'),
+(4, 'Mercy Johnson', 'mercy@library.com', NULL, '$2y$10$Y2uKSmB7dw4FFOa92rpKI.gMZ8/jkM82rWbKyMdGe0DzIiXTSGOca', 'librarian', '2026-01-17 18:07:09'),
+(5, 'Mick James', 'mike@gmail.com', NULL, '$2y$10$sdDaQuU.06xP4sFOxj2bouXWWanGcrSOLbHWw1zlyMZzBFeExeAbi', 'member', '2026-01-17 19:20:57');
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `audit_trail`
+--
+ALTER TABLE `audit_trail`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `books`
@@ -214,6 +266,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `audit_trail`
+--
+ALTER TABLE `audit_trail`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
 -- AUTO_INCREMENT for table `books`
 --
 ALTER TABLE `books`
@@ -235,7 +293,7 @@ ALTER TABLE `borrow_requests`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -247,11 +305,17 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `audit_trail`
+--
+ALTER TABLE `audit_trail`
+  ADD CONSTRAINT `audit_trail_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `books`
